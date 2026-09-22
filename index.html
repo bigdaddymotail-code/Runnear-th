@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>RunNear — สนามวิ่งใกล้ฉัน</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --primary: #73dc4b;
+      --primary-dark: #173c23;
+      --primary-soft: #e0f8d6;
+      --yellow: #ffc83d;
+      --text: #13291c;
+      --muted: #77847c;
+      --border: #dde4de;
+      --surface: #ffffff;
+      --background: #eef2ee;
+      --danger: #d64231;
+      --shadow: 0 16px 45px rgba(18, 51, 30, 0.18);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; height: 100%; margin: 0; font-family: "Noto Sans Thai", sans-serif; color: var(--text); background: #dfe5e0; overflow: hidden; }
+    .app { position: relative; width: 100%; max-width: 520px; height: 100dvh; margin: 0 auto; background: var(--background); display: flex; flex-direction: column; }
+    .header { position: absolute; top: 0; right: 0; left: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; height: 72px; background: rgba(255, 255, 255, 0.96); border-bottom: 1px solid rgba(221, 228, 222, 0.8); backdrop-filter: blur(16px); }
+    .header h1 { margin: 0; font-size: 22px; font-weight: 800; }
+    .header-logo { position: absolute; left: 20px; display: grid; width: 38px; height: 38px; place-items: center; color: #fff; background: var(--primary); border-radius: 12px; }
+    #map { position: absolute; inset: 0; z-index: 1; background: #e7ece7; }
+    .search-panel { position: absolute; top: 84px; right: 14px; left: 14px; z-index: 900; }
+    .search-box { display: flex; align-items: center; height: 50px; padding: 0 15px; background: rgba(255, 255, 255, 0.97); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 10px 25px rgba(27, 57, 37, 0.1); }
+    .search-box input { width: 100%; margin-left: 10px; background: transparent; border: 0; outline: 0; font-size: 15px; }
+    .filters { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 5px; }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter-chip { flex: 0 0 auto; height: 38px; padding: 0 16px; font-size: 13px; font-weight: 700; background: #fff; border: 1px solid var(--border); border-radius: 14px; cursor: pointer; }
+    .filter-chip.active { color: #1a5424; background: var(--primary-soft); border-color: #bcefac; }
+    .result-pill { position: absolute; top: 195px; left: 50%; z-index: 800; transform: translateX(-50%); padding: 8px 15px; font-size: 12px; background: rgba(255, 255, 255, 0.9); border-radius: 99px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); white-space: nowrap; }
+    .run-marker { position: relative; display: grid; width: 44px; height: 44px; place-items: center; background: var(--yellow); border: 3px solid #fff; border-radius: 50% 50% 50% 6px; transform: rotate(-45deg); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .run-marker span { display: grid; width: 30px; height: 30px; place-items: center; background: #fff8d7; border-radius: 50%; transform: rotate(45deg); }
+    .run-marker.free { background: var(--primary); }
+    .run-marker.selected { background: #148846; transform: rotate(-45deg) scale(1.1); }
+    .detail-card { position: absolute; right: 12px; bottom: 85px; left: 12px; z-index: 1100; padding: 18px; background: #fff; border-radius: 28px; box-shadow: var(--shadow); transform: translateY(120%); transition: transform 0.3s ease; }
+    .detail-card.open { transform: translateY(0); }
+    .bottom-nav { position: absolute; right: 0; bottom: 0; left: 0; z-index: 1000; display: grid; grid-template-columns: repeat(4, 1fr); height: 75px; background: #fff; border-top: 1px solid var(--border); align-items: center; text-align: center; font-size: 11px; font-weight: 700; color: #859188; }
+    .nav-item.active { color: #28772d; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="header-logo"><i data-lucide="footprints"></i></div>
+      <h1>RunNear TH</h1>
+    </header>
+    <section class="search-panel">
+      <label class="search-box">
+        <i data-lucide="search" style="width:20px; color:#8a978f;"></i>
+        <input id="searchInput" type="search" placeholder="ค้นหาสวน สนามกีฬา หรือจังหวัด" />
+      </label>
+      <div class="filters">
+        <button class="filter-chip active" data-filter="all">ทั้งหมด</button>
+        <button class="filter-chip" data-filter="free">ใช้ฟรี</button>
+        <button class="filter-chip" data-filter="light">มีไฟ</button>
+        <button class="filter-chip" data-filter="rubber">พื้นยาง</button>
+      </div>
+    </section>
+    <div class="result-pill">พบสนามวิ่ง <strong id="resultCount">0</strong> แห่ง</div>
+    <div id="map"></div>
+    <article class="detail-card" id="detailCard">
+      <h2 id="placeName" style="margin:0 0 5px; font-size:18px;">สวนลุมพินี</h2>
+      <p id="placeLocation" style="margin:0 0 15px; color:var(--muted); font-size:13px;">กรุงเทพมหานคร</p>
+      <button onclick="document.getElementById('detailCard').classList.remove('open')" style="width:100%; height:44px; background:var(--primary); border:0; border-radius:14px; font-weight:800; cursor:pointer;">ปิดหน้าต่าง</button>
+    </article>
+    <nav class="bottom-nav">
+      <div class="nav-item">🏠 หน้าแรก</div>
+      <div class="nav-item active">🗺️ แผนที่</div>
+      <div class="nav-item">🔍 ค้นหา</div>
+      <div class="nav-item">👤 โปรไฟล์</div>
+    </nav>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    lucide.createIcons();
+    const runningPlaces = [
+      { id: 1, name: "สวนลุมพินี", area: "กรุงเทพมหานคร", lat: 13.7306, lng: 100.5416, free: true, light: true, rubber: true },
+      { id: 2, name: "สวนเบญจกิติ", area: "กรุงเทพมหานคร", lat: 13.7264, lng: 100.5581, free: true, light: true, rubber: false },
+      { id: 3, name: "สวนสาธารณะหนองบวกหาด", area: "เชียงใหม่", lat: 18.7845, 98.9832, free: true, light: true, rubber: false }
+    ];
+    const map = L.map("map", { zoomControl: false }).setView([13.7508, 100.5367], 6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+    const markerLayer = L.layerGroup().addTo(map);
+    function renderMarkers(places) {
+      markerLayer.clearLayers();
+      document.getElementById("resultCount").textContent = places.length;
+      places.forEach(place => {
+        const marker = L.marker([place.lat, place.lng], {
+          icon: L.divIcon({ className: "", html: `<div class="run-marker free"><span>🏃</span></div>`, iconSize: [44, 44], iconAnchor: [22, 40] })
+        });
+        marker.on("click", () => {
+          document.getElementById("placeName").textContent = place.name;
+          document.getElementById("placeLocation").textContent = place.area;
+          document.getElementById("detailCard").classList.add("open");
+          map.setView([place.lat, place.lng], 14);
+        });
+        marker.addTo(markerLayer);
+      });
+    }
+    renderMarkers(runningPlaces);
+  </script>
+</body>
+</html>
