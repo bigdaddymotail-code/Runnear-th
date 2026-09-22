@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>RunNear TH — สนามวิ่งใกล้ฉัน</title>
+  <meta name="description" content="RunNear TH คือแผนที่สนามวิ่งที่คนไทยช่วยกันปักหมุด บอกพื้นผิว ความหนาแน่นคน เวลาเปิด-ปิด และรูปสนามจริง ใช้ฟรี ไม่ต้องล็อกอิน" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --primary: #4CAF50;
+      --primary-dark: #163A22;
+      --primary-soft: #E3F6DE;
+      --track: #FF6B35;
+      --track-soft: #FFE4D6;
+      --text: #14261A;
+      --muted: #74847B;
+      --border: #DEE6DD;
+      --surface: #ffffff;
+      --background: #EEF3ED;
+      --danger: #D64231;
+      --shadow: 0 18px 48px rgba(15, 41, 24, 0.2);
+    }
+    :root { --yellow: var(--track); }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%;
+      margin: 0;
+      font-family: "Noto Sans Thai", sans-serif;
+      color: var(--text);
+      background: var(--background);
+    }
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+
+    /* ======================= LANDING PAGE ======================= */
+    .site-header {
+      position: sticky; top: 0; z-index: 500;
+      background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 72px; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; white-space: nowrap; }
+    .brand img { width: 40px; height: 40px; object-fit: contain; }
+    .site-nav { display: flex; gap: 22px; font-size: 14px; font-weight: 700; color: var(--muted); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      height: 44px; padding: 0 20px; border-radius: 14px; border: 1px solid var(--border);
+      background: #fff; font-weight: 800; font-size: 14px; white-space: nowrap;
+    }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 10px 22px rgba(76,175,80,.28); }
+    .btn.track { background: var(--track); border-color: var(--track); color: #fff; box-shadow: 0 10px 22px rgba(255,107,53,.28); }
+
+    .hero { padding: 46px 0 40px; background: linear-gradient(180deg,#E7F6E2 0%, var(--background) 100%); overflow: hidden; }
+    .hero .wrap { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; align-items: center; }
+    .hero h1 { font-size: clamp(28px,4.6vw,42px); line-height: 1.24; font-weight: 800; margin: 0 0 14px; max-width: 15ch; }
+    .hero p.lead { color: var(--muted); font-size: 16.5px; line-height: 1.6; max-width: 46ch; margin: 0 0 22px; }
+    .hero-ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+    .stat-row { display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
+    .stat-pill { background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; color: var(--primary-dark); }
+    .hero-art { display: flex; justify-content: center; }
+    .hero-art img { width: 100%; max-width: 340px; filter: drop-shadow(0 20px 30px rgba(20,60,30,.18)); }
+
+    .loop { padding: 50px 0 10px; }
+    .loop h2 { font-size: 25px; font-weight: 800; margin: 0 0 6px; }
+    .loop p.sub { color: var(--muted); margin: 0 0 26px; max-width: 50ch; }
+    .steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .step { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 18px; }
+    .step .n { width: 32px; height: 32px; border-radius: 10px; background: var(--primary-soft); color: var(--primary-dark); display: grid; place-items: center; font-weight: 800; margin-bottom: 10px; font-size: 14px; }
+    .step h3 { margin: 0 0 5px; font-size: 15px; }
+    .step p { margin: 0; color: var(--muted); font-size: 12.8px; line-height: 1.5; }
+
+    .features { padding: 50px 0 10px; }
+    .features h2 { font-size: 25px; font-weight: 800; margin: 0 0 6px; }
+    .features p.sub { color: var(--muted); margin: 0 0 24px; max-width: 52ch; }
+    .feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .feat { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 16px; text-align: center; }
+    .feat i { color: var(--primary); width: 26px; height: 26px; }
+    .feat span { display: block; margin-top: 8px; font-size: 12.5px; font-weight: 700; }
+
+    .pin-cta { padding: 54px 0; }
+    .pin-cta .box { background: var(--primary-dark); color: #fff; border-radius: 28px; padding: 38px 30px; display: grid; grid-template-columns: 1.3fr auto; align-items: center; gap: 20px; }
+    .pin-cta h2 { margin: 0 0 8px; font-size: 22px; font-weight: 800; }
+    .pin-cta p { margin: 0; color: #cfe9d2; font-size: 14px; max-width: 42ch; }
+
+    .community { padding: 10px 0 50px; }
+    .community .box { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 30px; }
+    .community h2 { font-size: 22px; font-weight: 800; margin: 0 0 10px; }
+    .community p { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0; }
+    .community img { max-width: 160px; margin: 0 auto; }
+
+    .faq { padding: 10px 0 54px; }
+    .faq h2 { font-size: 24px; font-weight: 800; margin: 0 0 18px; }
+    .faq-item { border-top: 1px solid var(--border); padding: 16px 0; }
+    .faq-item:last-child { border-bottom: 1px solid var(--border); }
+    .faq-item strong { display: block; font-size: 15px; margin-bottom: 5px; }
+    .faq-item p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+
+    .site-footer { padding: 30px 0 50px; border-top: 1px solid var(--border); }
+    .site-footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .site-footer .brand img { width: 30px; height: 30px; }
+    .site-footer p { color: var(--muted); font-size: 12.5px; margin: 0; }
+
+    .app-section { padding: 8px 0 60px; background: linear-gradient(180deg, var(--background) 0%, #E4EEE2 100%); }
+    .app-section .app-intro { text-align: center; max-width: 560px; margin: 0 auto 26px; }
+    .app-section .app-intro h2 { font-size: 24px; font-weight: 800; margin: 0 0 8px; }
+    .app-section .app-intro p { color: var(--muted); font-size: 14px; margin: 0; }
+
+    @media (max-width: 860px) {
+      .hero .wrap { grid-template-columns: 1fr; text-align: center; }
+      .hero p.lead { margin-left: auto; margin-right: auto; }
+      .hero-ctas { justify-content: center; }
+      .stat-row { justify-content: center; }
+      .hero-art { order: -1; }
+      .steps { grid-template-columns: repeat(2,1fr); }
+      .feat-grid { grid-template-columns: repeat(2,1fr); }
+      .pin-cta .box { grid-template-columns: 1fr; text-align: center; }
+      .community .box { grid-template-columns: 1fr; text-align: center; }
+      .site-nav { display: none; }
+    }
+
+    /* ======================= แอปแผนที่ (ฝังในหน้า ไม่เต็มจอถาวร) ======================= */
+    .app {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      height: 760px;
+      max-height: 84vh;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--background);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .header {
+      position: absolute; top: 0; right: 0; left: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      height: 76px;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid rgba(221, 228, 222, 0.8);
+      backdrop-filter: blur(16px);
+    }
+    .header h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.15; }
+    .header .tagline { display: block; margin-top: 1px; color: var(--muted); font-size: 10.5px; font-weight: 600; }
+    .header-logo { position: absolute; left: 18px; width: 38px; height: 38px; display: grid; place-items: center; }
+    .header-logo img { width: 38px; height: 38px; object-fit: contain; }
+
+    #map { position: absolute; inset: 0; z-index: 1; background: #e7ece7; }
+    .leaflet-control-zoom { display: none; }
+    .leaflet-control-attribution { margin-bottom: 85px !important; padding: 2px 5px !important; font-size: 8px !important; border-radius: 6px 0 0; }
+
+    .search-panel { position: absolute; top: 88px; right: 14px; left: 14px; z-index: 900; }
+    .search-box { display: flex; align-items: center; height: 52px; padding: 0 15px; background: rgba(255, 255, 255, 0.97); border: 1px solid rgba(221, 228, 222, 0.9); border-radius: 20px; box-shadow: 0 8px 22px rgba(27, 57, 37, 0.12); backdrop-filter: blur(14px); }
+    .search-box i { flex: 0 0 auto; width: 20px; color: #8a978f; }
+    .search-box input { width: 100%; margin-left: 10px; background: transparent; border: 0; outline: 0; font-size: 15px; }
+    .search-box input::placeholder { color: #96a198; }
+
+    .filters { display: flex; gap: 8px; margin-top: 10px; padding: 0 1px 6px; overflow-x: auto; scrollbar-width: none; }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter-chip { flex: 0 0 auto; height: 40px; padding: 0 16px; font-size: 13px; font-weight: 700; white-space: nowrap; background: rgba(255, 255, 255, 0.96); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 4px 12px rgba(27, 57, 37, 0.08); }
+    .filter-chip.active { color: #1a5424; background: var(--primary-soft); border-color: #bcefac; }
+
+    .result-pill { position: absolute; top: 200px; left: 50%; z-index: 800; display: flex; align-items: center; gap: 6px; max-width: calc(100% - 30px); padding: 8px 15px; color: #536158; background: rgba(255, 255, 255, 0.94); border: 1px solid rgba(221, 228, 222, 0.9); border-radius: 999px; box-shadow: 0 5px 15px rgba(27, 57, 37, 0.1); transform: translateX(-50%); white-space: nowrap; backdrop-filter: blur(12px); font-size: 12px; }
+    .result-pill strong { color: var(--primary-dark); }
+
+    .run-marker { position: relative; display: grid; width: 48px; height: 48px; place-items: center; background: var(--track); border: 3px solid #fff; border-radius: 50% 50% 50% 6px; box-shadow: 0 5px 14px rgba(35, 49, 38, 0.22); transform: rotate(-45deg); }
+    .run-marker span { display: grid; width: 32px; height: 32px; place-items: center; color: #14341f; background: #fff8d7; border-radius: 50%; transform: rotate(45deg); }
+    .run-marker span svg { width: 18px; height: 18px; stroke-width: 2.5; }
+    .run-marker.selected { background: #148846; transform: rotate(-45deg) scale(1.1); box-shadow: 0 7px 18px rgba(20, 136, 70, 0.32); }
+    .run-marker.selected span { color: #0c6635; background: #dff8d4; }
+    .run-marker.free { background: var(--primary); }
+    .user-marker { width: 18px; height: 18px; background: #2688ff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 6px rgba(38, 136, 255, 0.2), 0 3px 10px rgba(0, 0, 0, 0.2); }
+
+    .map-actions { position: absolute; right: 14px; bottom: 100px; z-index: 850; display: flex; flex-direction: column; gap: 10px; }
+    .circle-button { display: grid; width: 48px; height: 48px; padding: 0; place-items: center; background: #fff; border: 1px solid var(--border); border-radius: 50%; box-shadow: 0 6px 16px rgba(27, 57, 37, 0.15); }
+    .circle-button i { width: 20px; }
+
+    .add-place { position: absolute; right: 14px; bottom: 158px; z-index: 850; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 16px; color: #123a20; font-weight: 800; font-size: 13px; background: var(--primary); border: 0; border-radius: 18px; box-shadow: 0 10px 22px rgba(81, 188, 57, 0.3); }
+    .add-place i { width: 18px; }
+
+    .detail-card { position: absolute; right: 10px; bottom: 16px; left: 10px; z-index: 1100; padding: 16px; background: rgba(255, 255, 255, 0.98); border: 1px solid rgba(222, 230, 223, 0.95); border-radius: 26px; box-shadow: var(--shadow); transform: translateY(calc(100% + 40px)); opacity: 0; transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease; backdrop-filter: blur(16px); }
+    .detail-card.open { transform: translateY(0); opacity: 1; }
+    .card-handle { width: 40px; height: 4px; margin: -6px auto 12px; background: #d6ddd7; border-radius: 99px; }
+    .card-top { display: flex; align-items: flex-start; gap: 12px; }
+    .place-icon { display: grid; flex: 0 0 auto; width: 52px; height: 52px; place-items: center; color: #174426; background: var(--primary); border-radius: 16px; overflow: hidden; }
+    .place-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .place-icon i { width: 26px; height: 26px; }
+    .place-heading { min-width: 0; flex: 1; }
+    .place-heading h2 { margin: 1px 0 3px; overflow: hidden; font-size: 18px; font-weight: 800; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+    .place-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+    .close-button { display: grid; flex: 0 0 auto; width: 36px; height: 36px; padding: 0; place-items: center; color: #5f6d64; background: #f6f8f6; border: 1px solid var(--border); border-radius: 50%; }
+    .close-button i { width: 18px; }
+
+    .status-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+    .status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; color: #516158; font-size: 12px; font-weight: 700; background: #f3f6f3; border-radius: 999px; }
+    .status.open { color: #16753a; background: #e2f7dc; }
+    .status i { width: 14px; height: 14px; }
+
+    .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+    .fact { min-width: 0; padding: 9px 6px; text-align: center; background: #f3f6f3; border-radius: 14px; }
+    .fact i { width: 18px; height: 18px; color: #2b7a3c; }
+    .fact strong { display: block; margin-top: 3px; font-size: 11px; line-height: 1.2; }
+    .fact span { display: block; margin-top: 1px; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .card-actions { display: grid; grid-template-columns: 1fr 1fr 42px; gap: 6px; margin-top: 12px; }
+    .outline-button { display: flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 8px; font-size: 12px; font-weight: 800; background: #fff; border: 1px solid #d6ded7; border-radius: 14px; }
+    .outline-button i { width: 15px; }
+    .outline-button.report { color: var(--danger); }
+
+    .primary-actions { display: grid; grid-template-columns: 1fr 1.15fr; gap: 8px; margin-top: 8px; }
+    .large-button { display: flex; align-items: center; justify-content: center; gap: 6px; height: 46px; font-size: 14px; font-weight: 800; background: #fff; border: 1px solid #d6ded7; border-radius: 16px; }
+    .large-button.primary { color: #153c21; background: var(--primary); border-color: var(--primary); box-shadow: 0 6px 16px rgba(115, 220, 75, 0.25); }
+    .large-button i { width: 18px; }
+
+    .toast { position: absolute; bottom: 30px; left: 50%; z-index: 1500; max-width: calc(100% - 30px); padding: 10px 15px; color: #fff; font-size: 12px; font-weight: 700; text-align: center; background: rgba(19, 41, 28, 0.93); border-radius: 12px; box-shadow: 0 8px 20px rgba(19, 41, 28, 0.22); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; transition: 0.22s ease; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    /* ---- แผ่นฟอร์ม: ปักหมุด / รีวิว / แจ้งข้อมูล / รายละเอียด ---- */
+    .sheet-backdrop { position: absolute; inset: 0; z-index: 1800; display: none; align-items: flex-end; background: rgba(14, 26, 17, 0.46); }
+    .sheet-backdrop.open { display: flex; }
+    .sheet { width: 100%; max-height: 86%; overflow: auto; padding: 20px 20px calc(18px + env(safe-area-inset-bottom)); background: #fff; border-radius: 28px 28px 0 0; box-shadow: var(--shadow); }
+    .sheet-handle { width: 40px; height: 4px; margin: 0 auto 14px; background: #d9e0d8; border-radius: 99px; }
+    .sheet h3 { margin: 0 0 4px; font-size: 18px; font-weight: 800; }
+    .sheet p.hint { margin: 0 0 16px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+    .field { margin-bottom: 13px; }
+    .field label { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 700; color: var(--primary-dark); }
+    .field input[type=text], .field select, .field textarea, .field input[type=time] {
+      width: 100%; padding: 11px 13px; background: var(--background); border: 1px solid var(--border); border-radius: 13px; font-size: 14px;
+    }
+    .field textarea { resize: none; }
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .toggle-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .toggle-chip { padding: 9px 14px; font-size: 12.5px; font-weight: 700; background: var(--background); border: 1px solid var(--border); border-radius: 12px; }
+    .toggle-chip.active { color: #1a5424; background: var(--primary-soft); border-color: #bcefac; }
+    .segmented { display: flex; gap: 6px; }
+    .segmented button { flex: 1; padding: 10px 6px; font-size: 12.5px; font-weight: 700; background: var(--background); border: 1px solid var(--border); border-radius: 12px; }
+    .segmented button.active { color: #7a3a12; background: var(--track-soft); border-color: #ffc4a3; }
+    .photo-upload { display: flex; align-items: center; gap: 10px; }
+    .photo-preview { width: 64px; height: 64px; border-radius: 14px; background: var(--background); border: 1px dashed var(--border); display: grid; place-items: center; overflow: hidden; flex: 0 0 auto; }
+    .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-preview i { color: var(--muted); width: 22px; }
+    .file-btn { height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--background); font-size: 12.5px; font-weight: 700; }
+    .picked-hint { margin-bottom: 12px; padding: 10px 13px; color: #1a5424; font-size: 12px; font-weight: 600; background: var(--primary-soft); border-radius: 12px; display: flex; align-items: center; gap: 7px; }
+    .picked-hint.pending { color: #8a5a12; background: #fff3de; }
+    .stars-input { display: flex; gap: 6px; margin-bottom: 2px; font-size: 30px; line-height: 1; }
+    .stars-input span { color: #e3e8e2; }
+    .stars-input span.on { color: var(--track); }
+    .sheet-actions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; margin-top: 6px; }
+    .sheet-actions button { height: 49px; font-size: 14.5px; font-weight: 800; border-radius: 15px; border: 1px solid var(--border); background: #fff; }
+    .sheet-actions button.primary { color: #163a22; background: var(--primary); border-color: var(--primary); }
+
+    /* ---- แผ่นรายละเอียดสนาม ---- */
+    .detail-photo { width: 100%; height: 150px; border-radius: 18px; overflow: hidden; background: var(--background); display: grid; place-items: center; margin-bottom: 14px; }
+    .detail-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .detail-photo i { color: var(--muted); width: 30px; }
+    .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+    .detail-tags span { padding: 6px 11px; background: var(--background); border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--primary-dark); }
+    .review-item { padding: 10px 0; border-top: 1px solid var(--border); font-size: 12.5px; }
+    .review-item .stars { color: var(--track); font-size: 13px; margin-bottom: 3px; }
+    .review-item p { margin: 0; color: var(--muted); line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- ======================= LANDING PAGE ======================= -->
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="#top"><img src="assets/logo.png" alt="RunNear TH" />RunNear TH</a>
+      <nav class="site-nav">
+        <a href="#how">ทำงานยังไง</a>
+        <a href="#community">ชุมชน</a>
+        <a href="#faq">คำถามที่เจอบ่อย</a>
+      </nav>
+      <a class="btn primary" href="#app">เปิดแผนที่</a>
+    </div>
+  </header>
+
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div>
+        <h1>อยากวิ่งตอนนี้ หาสนามวิ่งใกล้ตัวได้ใน 5 วินาที</h1>
+        <p class="lead">RunNear TH คือแผนที่สนามวิ่งที่คนไทยช่วยกันปักหมุด บอกพื้นผิว ความหนาแน่นของคน เวลาเปิด-ปิด และรูปสนามจริง ใช้ฟรี ไม่ต้องล็อกอิน</p>
+        <div class="hero-ctas">
+          <a class="btn track" href="#app">เปิดแผนที่เลย</a>
+          <a class="btn" href="#app">ปักหมุดสนามที่คุณรู้</a>
+        </div>
+        <div class="stat-row">
+          <span class="stat-pill">ไม่ต้องล็อกอิน</span>
+          <span class="stat-pill">ข้อมูลจากคนวิ่งจริง</span>
+          <span class="stat-pill">ฟรี 100% ไม่มีโฆษณา</span>
+        </div>
+      </div>
+      <div class="hero-art"><img src="assets/logo.png" alt="มาสคอต RunNear TH" /></div>
+    </div>
+  </section>
+
+  <section class="loop" id="how">
+    <div class="wrap">
+      <h2>วงจรง่าย ๆ ที่ทำให้แผนที่แม่นขึ้นทุกวัน</h2>
+      <p class="sub">หา → วิ่ง → ให้ดาว → ปักหมุด → คนวิ่งคนต่อไปหาเจอเร็วขึ้น</p>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h3>หา</h3><p>กดครั้งเดียว เห็นสนามวิ่งใกล้สุดพร้อมระยะทาง</p></div>
+        <div class="step"><div class="n">2</div><h3>วิ่ง</h3><p>รู้ก่อนไปว่าพื้นแบบไหน คนเยอะไหม เปิดกี่โมง</p></div>
+        <div class="step"><div class="n">3</div><h3>ให้ดาว</h3><p>วิ่งเสร็จแล้ว ให้คะแนนสนาม ใช้เวลา 10 วินาที</p></div>
+        <div class="step"><div class="n">4</div><h3>ปักหมุด</h3><p>เจอสนามใหม่ ปักหมุดไว้ให้คนวิ่งคนต่อไปรอด</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="wrap">
+      <h2>เห็นทุกอย่างที่ต้องรู้ ก่อนจะวิ่งไป</h2>
+      <p class="sub">พื้นผิว แสงไฟ ความหนาแน่นของคน เวลาเปิด-ปิด และรูปสนามจริง อยู่ในการ์ดเดียว</p>
+      <div class="feat-grid">
+        <div class="feat"><i data-lucide="layers-3"></i><span>พื้นผิววิ่ง</span></div>
+        <div class="feat"><i data-lucide="lightbulb"></i><span>แสงไฟกลางคืน</span></div>
+        <div class="feat"><i data-lucide="users"></i><span>ความหนาแน่นคน</span></div>
+        <div class="feat"><i data-lucide="clock-3"></i><span>เวลาเปิด-ปิด</span></div>
+        <div class="feat"><i data-lucide="image"></i><span>รูปสนามจริง</span></div>
+        <div class="feat"><i data-lucide="car"></i><span>ที่จอดรถ</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pin-cta">
+    <div class="wrap">
+      <div class="box">
+        <div>
+          <h2>เจอสนามดี อย่าเก็บไว้คนเดียว</h2>
+          <p>ปักหมุดใช้เวลา 30 วินาที ไม่ต้องล็อกอิน บอกแค่ว่าอยู่ไหน พื้นแบบไหน แล้วคนวิ่งคนต่อไปแถวนั้นก็รอด</p>
+        </div>
+        <a class="btn track" href="#app">ปักหมุดที่คุณรู้</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="community" id="community">
+    <div class="wrap">
+      <div class="box">
+        <div>
+          <h2>คนหนึ่งปัก อีกคนได้วิ่ง</h2>
+          <p>แผนที่ตั้งต้นมาจากข้อมูลเปิดของ OpenStreetMap แล้วคนที่เคยวิ่งช่วยกันเติมว่าที่ไหนดี พื้นแบบไหน คนเยอะไหม ไม่มีโฆษณา ไม่มีสปอนเซอร์หมุด</p>
+        </div>
+        <img src="assets/logo.png" alt="มาสคอต RunNear TH" />
+      </div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <h2>คำถามที่เจอบ่อย</h2>
+      <div class="faq-item"><strong>ต้องสมัครสมาชิกไหม</strong><p>ไม่ต้อง เปิดเว็บแล้วใช้ได้เลย ไม่ต้องล็อกอิน</p></div>
+      <div class="faq-item"><strong>ข้อมูลสนามมาจากไหน</strong><p>ตำแหน่งส่วนใหญ่มาจาก OpenStreetMap ส่วนพื้นผิว ความหนาแน่นคน เวลาเปิด-ปิด และรูปสนาม มาจากคนวิ่งในชุมชนช่วยกันเติม</p></div>
+      <div class="faq-item"><strong>ปักหมุดผิดหรือสนามปิดแล้วทำยังไง</strong><p>กดแจ้งข้อมูลในการ์ดรายละเอียดได้เลย ทีมงานจะตรวจสอบก่อนแก้ไข ไม่ลบหมุดทันที</p></div>
+      <div class="faq-item"><strong>ใช้ต่างจังหวัดได้ไหม</strong><p>ปักหมุดได้ทุกที่ในไทย ตอนนี้มีข้อมูลตั้งต้นครบทุกจังหวัดแล้ว และจะแม่นขึ้นเรื่อย ๆ ตามที่คนช่วยกันปัก</p></div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <a class="brand" href="#top"><img src="assets/logo.png" alt="RunNear TH" />RunNear TH</a>
+      <p>© 2569 RunNear TH · ข้อมูลและคะแนนทุกอันมาจากคนวิ่งจริง</p>
+    </div>
+  </footer>
+
+  <!-- ======================= แผนที่ / แอป ======================= -->
+  <section class="app-section" id="app">
+    <div class="app-intro">
+      <h2>ลองใช้แผนที่ได้เลย</h2>
+      <p>ค้นหา กรอง ดูรายละเอียด ปักหมุด และให้คะแนนสนามวิ่งได้จริงด้านล่างนี้</p>
+    </div>
+
+  <main class="app">
+    <header class="header">
+      <div class="header-logo"><img src="assets/logo.png" alt="RunNear TH" /></div>
+      <h1>RunNear TH<span class="tagline">แผนที่สนามวิ่งทั่วไทย</span></h1>
+    </header>
+
+    <section class="search-panel">
+      <label class="search-box">
+        <i data-lucide="search"></i>
+        <input id="searchInput" type="search" placeholder="ค้นหาสวน สนามกีฬา หรือจังหวัด" />
+      </label>
+      <div class="filters">
+        <button class="filter-chip active" data-filter="all">ทั้งหมด</button>
+        <button class="filter-chip" data-filter="near">ใกล้ฉัน</button>
+        <button class="filter-chip" data-filter="free">ใช้ฟรี</button>
+        <button class="filter-chip" data-filter="light">มีไฟ</button>
+        <button class="filter-chip" data-filter="rubber">ลู่ยาง</button>
+        <button class="filter-chip" data-filter="parking">มีที่จอดรถ</button>
+      </div>
+    </section>
+
+    <div class="result-pill">
+      <i data-lucide="map-pin"></i>
+      พบสนามวิ่ง <strong id="resultCount">0</strong> แห่ง
+    </div>
+
+    <div id="map"></div>
+
+    <button class="add-place" id="addPlaceButton">
+      <i data-lucide="map-pin-plus"></i>
+      เพิ่มสนามวิ่ง
+    </button>
+
+    <div class="map-actions">
+      <button class="circle-button" id="locateButton" aria-label="ตำแหน่งของฉัน"><i data-lucide="locate-fixed"></i></button>
+    </div>
+
+    <article class="detail-card" id="detailCard">
+      <div class="card-handle"></div>
+      <div class="card-top">
+        <div class="place-icon" id="cardIconWrap"><i data-lucide="footprints"></i></div>
+        <div class="place-heading">
+          <h2 id="placeName">สวนลุมพินี</h2>
+          <p id="placeLocation">กรุงเทพมหานคร</p>
+        </div>
+        <button class="close-button" id="closeCard" aria-label="ปิด"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="status-row">
+        <span class="status open"><i data-lucide="clock-3"></i><span id="placeHours">เปิด 24 ชม.</span></span>
+        <span class="status"><i data-lucide="users"></i><span id="placeCrowd">คนปานกลาง</span></span>
+        <span class="status"><i data-lucide="star"></i><span id="placeRating">4.8</span></span>
+      </div>
+
+      <div class="facts">
+        <div class="fact"><i data-lucide="route"></i><strong id="placeDistance">2.5 กม.</strong><span>ระยะทาง</span></div>
+        <div class="fact"><i data-lucide="layers-3"></i><strong id="placeSurface">พื้นยาง</strong><span>พื้นผิวสนาม</span></div>
+        <div class="fact"><i data-lucide="lightbulb"></i><strong id="placeLight">มีไฟ</strong><span>ช่วงกลางคืน</span></div>
+      </div>
+
+      <div class="card-actions">
+        <button class="outline-button" id="reviewButton"><i data-lucide="pencil"></i>รีวิว</button>
+        <button class="outline-button report" id="reportButton"><i data-lucide="flag"></i>แจ้งข้อมูล</button>
+        <button class="outline-button" id="shareButton" aria-label="แชร์"><i data-lucide="share-2"></i></button>
+      </div>
+
+      <div class="primary-actions">
+        <button class="large-button" id="detailButton">ดูรายละเอียด</button>
+        <button class="large-button primary" id="navigateButton"><i data-lucide="navigation"></i>นำทาง</button>
+      </div>
+    </article>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- ปักหมุดสนามวิ่ง -->
+    <div class="sheet-backdrop" id="addSheet">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3>ปักหมุดสนามวิ่ง</h3>
+        <p class="hint">แตะจุดบนแผนที่ให้ตรงกับตำแหน่งสนาม แล้วกรอกรายละเอียดสั้น ๆ</p>
+        <div class="picked-hint pending" id="pickedCoord"><i data-lucide="map-pin"></i><span>ยังไม่ได้เลือกตำแหน่ง — ปิดหน้าต่างนี้แล้วแตะบนแผนที่</span></div>
+
+        <div class="field"><label>ชื่อสนาม</label><input type="text" id="newName" placeholder="เช่น สวนลุมพินี" /></div>
+        <div class="field"><label>จังหวัด / ย่าน</label><input type="text" id="newArea" placeholder="เช่น กรุงเทพมหานคร (ปทุมวัน)" /></div>
+
+        <div class="field"><label>พื้นผิวสนาม</label>
+          <select id="newSurface">
+            <option value="ลู่วิ่งพื้นยาง">ลู่วิ่งพื้นยาง</option>
+            <option value="พื้นคอนกรีต">พื้นคอนกรีต</option>
+            <option value="ถนนยางดำ">ถนนยางดำ (ยางมะตอย)</option>
+            <option value="ทางเดินปูน">ทางเดินปูน</option>
+          </select>
+        </div>
+
+        <div class="field"><label>ความหนาแน่นของคน</label>
+          <div class="segmented" id="crowdSegment">
+            <button type="button" data-v="น้อย">คนน้อย</button>
+            <button type="button" data-v="ปานกลาง">ปานกลาง</button>
+            <button type="button" data-v="เยอะ">คนเยอะ</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>เวลาเปิด-ปิดสนาม</label>
+          <div class="toggle-row" style="margin-bottom:8px">
+            <button type="button" class="toggle-chip" id="open24Toggle">เปิด 24 ชม.</button>
+          </div>
+          <div class="time-row" id="hoursRow">
+            <input type="time" id="newOpenTime" value="05:00" />
+            <input type="time" id="newCloseTime" value="21:00" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>สิ่งอำนวยความสะดวก</label>
+          <div class="toggle-row">
+            <button type="button" class="toggle-chip" data-key="light">มีไฟกลางคืน</button>
+            <button type="button" class="toggle-chip" data-key="free">ใช้ฟรี</button>
+            <button type="button" class="toggle-chip" data-key="parking">มีที่จอดรถ</button>
+            <button type="button" class="toggle-chip" data-key="rubber">ลู่ยาง</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>รูปสนาม (ไม่ใส่ก็ได้)</label>
+          <div class="photo-upload">
+            <div class="photo-preview" id="photoPreview"><i data-lucide="image"></i></div>
+            <label class="file-btn">เลือกรูป<input type="file" id="newPhoto" accept="image/*" style="display:none" /></label>
+          </div>
+        </div>
+
+        <div class="sheet-actions">
+          <button id="cancelAdd">ยกเลิก</button>
+          <button class="primary" id="submitAdd">ยืนยันปักหมุด</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ให้คะแนน -->
+    <div class="sheet-backdrop" id="reviewSheet">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3>ให้คะแนนสนามนี้</h3>
+        <p class="hint">ช่วยบอกคนวิ่งคนต่อไปว่าสนามนี้เป็นยังไงบ้าง</p>
+        <div class="stars-input" id="reviewStars">
+          <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+        </div>
+        <div class="field" style="margin-top:14px"><label>เล่าสั้น ๆ (ไม่ใส่ก็ได้)</label><textarea id="reviewComment" rows="2" placeholder="เช่น คนไม่เยอะช่วงเช้า วิวดี"></textarea></div>
+        <div class="sheet-actions">
+          <button id="cancelReview">ยกเลิก</button>
+          <button class="primary" id="submitReview">บันทึกรีวิว</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- แจ้งข้อมูล -->
+    <div class="sheet-backdrop" id="reportSheet">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3>ข้อมูลจุดนี้มีปัญหาอะไร</h3>
+        <p class="hint">รายงานจะถูกบันทึกไว้ให้ทีมงานตรวจสอบ ไม่ลบหมุดทันที</p>
+        <div class="field"><textarea id="reportDetail" rows="3" placeholder="เช่น สนามปิดปรับปรุง / ที่อยู่ผิด / ข้อมูลไม่ตรง"></textarea></div>
+        <div class="sheet-actions">
+          <button id="cancelReport">ยกเลิก</button>
+          <button class="primary" id="submitReport">ส่งรายงาน</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ดูรายละเอียด -->
+    <div class="sheet-backdrop" id="detailSheet">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="detail-photo" id="detailPhotoWrap"><i data-lucide="image"></i></div>
+        <h3 id="detailName">—</h3>
+        <p class="hint" id="detailArea">—</p>
+        <div class="detail-tags" id="detailTags"></div>
+        <div id="detailReviews"></div>
+        <div class="sheet-actions" style="grid-template-columns:1fr">
+          <button id="closeDetail">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  </section>
+
+  <!-- Leaflet JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+  <script>
+    lucide.createIcons();
+
+    // ฐานข้อมูลสนามวิ่งจริง (จัดเต็ม กทม. ทุกจุดฮิต และครบทุกจังหวัดทั่วไทย)
+const runningPlaces = [
+      // กรุงเทพมหานคร (จัดเต็มทุกสวนยอดฮิต)
+      { id: 1, name: "สวนลุมพินี", area: "กรุงเทพมหานคร (ปทุมวัน)", lat: 13.7306, lng: 100.5416, distance: "2.5 กม.", surface: "พื้นยาง/ถนน", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: true, free: true, light: true, rubber: true, parking: true },
+      { id: 2, name: "สวนเบญจกิติ", area: "กรุงเทพมหานคร (คลองเตย)", lat: 13.7264, lng: 100.5581, distance: "1.8 กม.", surface: "พื้นปูน/ยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.9", near: true, free: true, light: true, rubber: false, parking: true },
+      { id: 3, name: "สวนวชิรเบญจทัศ (สวนรถไฟ)", area: "กรุงเทพมหานคร (จตุจักร)", lat: 13.8126, lng: 100.5521, distance: "3.0 กม.", surface: "ทางลาดยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: true, free: true, light: true, rubber: false, parking: true },
+      { id: 4, name: "อุทยานสวนจตุจักร", area: "กรุงเทพมหานคร (จตุจักร)", lat: 13.8104, lng: 100.5554, distance: "3.0 กม.", surface: "ทางปูน/ยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: true, free: true, light: true, rubber: false, parking: true },
+      { id: 5, name: "สวนหลวง ร.9", area: "กรุงเทพมหานคร (ประเวศ)", lat: 13.6875, lng: 100.6622, distance: "5.0 กม.", surface: "ทางปูนรอบบึง", lightLabel: "มีไฟส่องสว่าง", rating: "4.9", near: true, free: true, light: true, rubber: false, parking: true },
+      { id: 6, name: "สวนสันติภาพ", area: "กรุงเทพมหานคร (ราชเทวี)", lat: 13.7626, lng: 100.5425, distance: "800 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: true, free: true, light: true, rubber: false, parking: false },
+      { id: 7, name: "สวนรมณีนาถ", area: "กรุงเทพมหานคร (พระนคร)", lat: 13.7455, lng: 100.5015, distance: "740 ม.", surface: "ทางปูน/ยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: true, free: true, light: true, rubber: true, parking: true },
+      { id: 8, name: "อุทยาน 100 ปี จุฬาฯ", area: "กรุงเทพมหานคร (ปทุมวัน)", lat: 13.7383, lng: 100.5283, distance: "800 ม.", surface: "พื้นยาง/ปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: true, free: true, light: true, rubber: true, parking: true },
+      { id: 9, name: "สวนเบญจสิริ", area: "กรุงเทพมหานคร (คลองเตย)", lat: 13.7327, lng: 100.5670, distance: "800 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: true, free: true, light: true, rubber: false, parking: false },
+      { id: 10, name: "สวนสาธารณะสะพานพระราม 8", area: "กรุงเทพมหานคร (บางพลัด)", lat: 13.7663, lng: 100.4960, distance: "500 ม.", surface: "ทางปูนริมน้ำ", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: true, free: true, light: true, rubber: false, parking: true },
+
+      // ภาคกลางและปริมณฑล
+      { id: 11, name: "อุทยานมกุฎรมยสราญ", area: "นนทบุรี (เมืองนนทบุรี)", lat: 13.8584, lng: 100.5224, distance: "1.2 กม.", surface: "ทางปูน/ยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: true, parking: true },
+      { id: 12, name: "สวนสุขภาพเทิดพระเกียรติ", area: "ปทุมธานี (ธัญบุรี)", lat: 14.0205, lng: 100.7250, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 13, name: "สวนศรีนครเขื่อนขันธ์", area: "สมุทรปราการ (พระประแดง)", lat: 13.6885, lng: 100.5750, distance: "2.0 กม.", surface: "ทางยกระดับ/ดิน", lightLabel: "มีไฟบางจุด", rating: "4.9", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 14, name: "สวนสุขภาพเทศบาลเมืองสมุทรสาคร", area: "สมุทรสาคร (เมือง)", lat: 13.5475, lng: 100.2735, distance: "800 ม.", surface: "พื้นยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: true, parking: true },
+      { id: 15, name: "สวนสุขภาพเทศบาลเมืองสมุทรสงคราม", area: "สมุทรสงคราม (เมือง)", lat: 13.4098, lng: 99.9970, distance: "600 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.3", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 16, name: "สวนสาธารณะบึงพระราม", area: "พระนครศรีอยุธยา", lat: 14.3542, lng: 100.5645, distance: "1.5 กม.", surface: "ทางปูนรอบบึง", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 17, name: "สวนเจ้าเยาว์", area: "อ่างทอง (เมือง)", lat: 14.5896, lng: 100.4550, distance: "500 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.2", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 18, name: "สวนราชาภิเษก", area: "ลพบุรี (เมือง)", lat: 14.8006, lng: 100.6132, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 19, name: "สวนสาธารณะเมืองสิงห์บุรี", area: "สิงห์บุรี (เมือง)", lat: 14.8936, lng: 100.3985, distance: "700 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.3", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 20, name: "เขื่อนเจ้าพระยา", area: "ชัยนาท (สรรพยา)", lat: 15.1581, lng: 100.1764, distance: "1.5 กม.", surface: "ทางลาดยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 21, name: "สวนเฉลิมพระเกียรติ 80 พรรษา", area: "สระบุรี (เมือง)", lat: 14.5289, lng: 100.9102, distance: "1.0 กม.", surface: "พื้นยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: true, parking: true },
+      { id: 22, name: "พุทธอุทยานมาฆบูชาอนุสรณ์", area: "นครนายก (เมือง)", lat: 14.2500, lng: 101.2160, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+
+      // ภาคตะวันออก
+      { id: 23, name: "สวนสาธารณะเฉลิมพระเกียรติ (เกาะลอย)", area: "ชลบุรี (ศรีราชา)", lat: 13.1743, lng: 100.9163, distance: "1.0 กม.", surface: "ทางปูนริมทะเล", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 24, name: "สวนศรีเมือง", area: "ระยอง (เมือง)", lat: 12.6814, lng: 101.2780, distance: "1.5 กม.", surface: "พื้นยาง/ปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: true, parking: true },
+      { id: 25, name: "สวนสาธารณะสมเด็จพระเจ้าตากสินมหาราช", area: "จันทบุรี (เมือง)", lat: 12.6114, lng: 102.1042, distance: "1.8 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 26, name: "สวนรุกขชาติจังหวัดตราด", area: "ตราด (เมือง)", lat: 12.2450, lng: 102.5150, distance: "800 ม.", surface: "ทางดินและปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.3", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 27, name: "สวนมรุพงษ์", area: "ฉะเชิงเทรา (เมือง)", lat: 13.6900, lng: 101.0770, distance: "900 ม.", surface: "ทางปูนริมแม่น้ำ", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 28, name: "สวนสมเด็จพระนางเจ้าสิริกิติ์ฯ", area: "ปราจีนบุรี (เมือง)", lat: 14.0550, lng: 101.3700, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 29, name: "พุทธอุทยานสระแก้ว", area: "สระแก้ว (เมือง)", lat: 13.8000, lng: 102.0700, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.3", near: false, free: true, light: true, rubber: false, parking: true },
+
+      // ภาคตะวันตก
+      { id: 30, name: "สวนสมเด็จพระศรีนครินทร์", area: "กาญจนบุรี (เมือง)", lat: 14.0150, lng: 99.5350, distance: "1.5 กม.", surface: "ทางปูนร่มรื่น", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 31, name: "อุทยานหินเขางู", area: "ราชบุรี (เมือง)", lat: 13.5250, lng: 99.7550, distance: "1.5 กม.", surface: "ทางปูนรอบน้ำ", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 32, name: "สวนเฉลิมพระเกียรติ 2 พรรษา (บึงฉวาก)", area: "สุพรรณบุรี", lat: 14.9200, lng: 100.0300, distance: "2.0 กม.", surface: "ทางลาดยาง", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 33, name: "สวนเฉลิมพระเกียรติ 80 พรรษา", area: "เพชรบุรี (เมือง)", lat: 13.1100, lng: 99.9400, distance: "1.0 กม.", surface: "ทางปูนริมน้ำ", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 34, name: "สวนสาธารณะเฉลิมพระเกียรติ", area: "ประจวบคีรีขันธ์ (หัวหิน)", lat: 12.5680, lng: 99.9570, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 35, name: "สวนสาธารณะเฉลิมพระเกียรติ", area: "ตาก (แม่สอด)", lat: 16.7100, lng: 98.5700, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+
+      // ภาคเหนือ
+      { id: 36, name: "สวนสาธารณะหนองบวกหาด", area: "เชียงใหม่ (เมือง)", lat: 18.7845, lng: 98.9832, distance: "600 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: false },
+      { id: 37, name: "กว๊านพะเยา", area: "พะเยา (เมือง)", lat: 19.1650, lng: 99.8900, distance: "2.0 กม.", surface: "ทางปูนริมน้ำ", lightLabel: "มีไฟส่องสว่าง", rating: "4.9", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 38, name: "สวนสมเด็จย่า", area: "เชียงราย (เมือง)", lat: 19.9050, lng: 99.8350, distance: "1.5 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 39, name: "สวนเขลางค์นคร", area: "ลำปาง (เมือง)", lat: 18.2880, lng: 99.5010, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 40, name: "สวนหนองดอก", area: "ลำพูน (เมือง)", lat: 18.5780, lng: 99.0080, distance: "800 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 41, name: "สวนสาธารณะเทศบาลเมืองน่าน", area: "น่าน (เมือง)", lat: 18.7750, lng: 100.7720, distance: "1.0 กม.", surface: "ทางปูนริมน้ำ", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 42, name: "สวนสุขภาพสมเด็จพระญาณสังวร", area: "แพร่ (เมือง)", lat: 18.1440, lng: 100.1410, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 43, name: "สวนสาธารณะหนองพระบาท", area: "อุตรดิตถ์ (เมือง)", lat: 17.6200, lng: 100.0900, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.3", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 44, name: "สวนสาธารณะหนองจองคำ", area: "แม่ฮ่องสอน (เมือง)", lat: 19.3010, lng: 97.9680, distance: "600 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+
+      // ภาคเหนือตอนล่าง
+      { id: 45, name: "สวนชมน่านเฉลิมพระเกียรติ", area: "พิษณุโลก (เมือง)", lat: 16.8210, lng: 100.2620, distance: "1.5 กม.", surface: "ทางปูนริมน้ำ", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 46, name: "อุทยานประวัติศาสตร์สุโขทัย", area: "สุโขทัย (เมืองเก่า)", lat: 17.0180, lng: 99.7020, distance: "2.5 กม.", surface: "ทางดิน/ปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 47, name: "อุทยานสวรรค์", area: "นครสวรรค์ (เมือง)", lat: 15.6980, lng: 100.1150, distance: "3.2 กม.", surface: "พื้นยาง/ปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: false, free: true, light: true, rubber: true, parking: true },
+      { id: 48, name: "บึงสีไฟ", area: "พิจิตร (เมือง)", lat: 16.4420, lng: 100.3420, distance: "4.0 กม.", surface: "ทางปูนริมบึง", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 49, name: "สวนสาธารณะหนองนารี", area: "เพชรบูรณ์ (เมือง)", lat: 16.4180, lng: 101.1550, distance: "1.8 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 50, name: "อุทยานประวัติศาสตร์กำแพงเพชร", area: "กำแพงเพชร", lat: 16.4820, lng: 99.5220, distance: "2.0 กม.", surface: "ทางร่มรื่น", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 51, name: "สวนเฉลิมพระเกียรติฯ สะแกกรัง", area: "อุทัยธานี (เมือง)", lat: 15.3850, lng: 100.0430, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+
+      // ภาคตะวันออกเฉียงเหนือ (อีสาน)
+      { id: 52, name: "สวนสุขภาพบุ่งตาหลั่ว", area: "นครราชสีมา (เมือง)", lat: 14.9680, lng: 102.1050, distance: "4.0 กม.", surface: "พื้นยาง/ปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.9", near: false, free: true, light: true, rubber: true, parking: true },
+      { id: 53, name: "บึงแก่นนคร", area: "ขอนแก่น (เมือง)", lat: 16.4281, lng: 102.8350, distance: "3.8 กม.", surface: "ทางวิ่งริมบึง", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 54, name: "หนองประจักษ์", area: "อุดรธานี (เมือง)", lat: 17.4085, lng: 102.7830, distance: "3.0 กม.", surface: "ทางปูนรอบหนอง", lightLabel: "มีไฟส่องสว่าง", rating: "4.9", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 55, name: "ทุ่งศรีเมือง", area: "อุบลราชธานี (เมือง)", lat: 15.2280, lng: 104.8580, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 56, name: "เขากระโดง", area: "บุรีรัมย์ (เมือง)", lat: 14.9350, lng: 103.1100, distance: "2.5 กม.", surface: "ทางธรรมชาติ/ปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 57, name: "สวนเฉลิมพระเกียรติ 80 พรรษา", area: "สุรินทร์ (เมือง)", lat: 14.8820, lng: 103.4930, distance: "1.5 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 58, name: "บึงพลาญชัย", area: "ร้อยเอ็ด (เมือง)", lat: 16.0570, lng: 103.6520, distance: "1.2 กม.", surface: "ทางปูนรอบบึง", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 59, name: "สวนสาธารณะเฉลิมพระเกียรติ", area: "มหาสารคาม (เมือง)", lat: 16.1850, lng: 103.3020, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 60, name: "สวนพญาแถน", area: "ยโสธร (เมือง)", lat: 15.7910, lng: 104.1480, distance: "1.5 กม.", surface: "ทางปูนริมน้ำ", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 61, name: "สวนเฉลิมพระเกียรติ 80 พรรษา", area: "ศรีสะเกษ (เมือง)", lat: 15.1150, lng: 104.3250, distance: "1.8 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 62, name: "สวนสาธารณะกุดน้ำกิน", area: "กาฬสินธุ์ (เมือง)", lat: 16.4350, lng: 103.5080, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 63, name: "หนองหาร", area: "สกลนคร (เมือง)", lat: 17.1550, lng: 104.1450, distance: "2.5 กม.", surface: "ทางปูนริมหนอง", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 64, name: "ลานพนมนาคา", area: "นครพนม (เมือง)", lat: 17.4050, lng: 104.7820, distance: "2.0 กม.", surface: "ทางปูนริมโขง", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 65, name: "สวนสาธารณะเฉลิมพระเกียรติ", area: "มุกดาหาร (เมือง)", lat: 16.5430, lng: 104.7350, distance: "1.0 กม.", surface: "ทางปูนริมโขง", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 66, name: "สวนสาธารณะกุดป่อง", area: "เลย (เมือง)", lat: 17.4900, lng: 101.7300, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 67, name: "ลานพญานาค", area: "หนองคาย (เมือง)", lat: 17.8820, lng: 102.7420, distance: "1.5 กม.", surface: "ทางปูนริมโขง", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 68, name: "หนองบัว", area: "หนองบัวลำภู (เมือง)", lat: 17.2150, lng: 102.4420, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.3", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 69, name: "พุทธอุทยานมงคลมิ่งเมือง", area: "อำนาจเจริญ (เมือง)", lat: 15.8570, lng: 104.6250, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 70, name: "สวนสาธารณะหนองปลาเฒ่า", area: "ชัยภูมิ (เมือง)", lat: 15.8050, lng: 102.0250, distance: "1.5 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 71, name: "บึงบึงกาฬ", area: "บึงกาฬ (เมือง)", lat: 18.3650, lng: 103.6550, distance: "2.0 กม.", surface: "ทางปูนริมบึง", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+
+      // ภาคใต้
+      { id: 72, name: "สวนสมเด็จพระศรีนครินทร์ 84", area: "นครศรีธรรมราช", lat: 8.4320, lng: 99.9630, distance: "2.0 กม.", surface: "พื้นยาง/ปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: true, parking: true },
+      { id: 73, name: "สวนสาธารณะหาดใหญ่", area: "สงขลา (หาดใหญ่)", lat: 7.0175, lng: 100.4905, distance: "1.8 กม.", surface: "ทางปูน/เขา", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 74, name: "สะพานหิน", area: "ภูเก็ต (เมือง)", lat: 7.8720, lng: 98.3970, distance: "1.8 กม.", surface: "พื้นยาง/ปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.8", near: false, free: true, light: true, rubber: true, parking: true },
+      { id: 75, name: "สวนสาธารณะธารา", area: "กระบี่ (เมือง)", lat: 8.0850, lng: 98.9150, distance: "1.5 กม.", surface: "ทางปูนริมทะเล", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 76, name: "สวนสาธารณะเกาะลำพู", area: "สุราษฎร์ธานี (เมือง)", lat: 9.1380, lng: 99.3320, distance: "1.5 กม.", surface: "ทางปูนรอบเกาะ", lightLabel: "มีไฟส่องสว่าง", rating: "4.7", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 77, name: "สวนสมเด็จพระศรีนครินทร์ พังงา", area: "พังงา (เมือง)", lat: 8.4450, lng: 98.5300, distance: "1.0 กม.", surface: "ทางปูนร่มรื่น", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 78, name: "สวนสาธารณะวังเจ้าเมืองพัทลุง", area: "พัทลุง (เมือง)", lat: 7.6180, lng: 100.1250, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 79, name: "สวนสมเด็จพระศรีนครินทร์ 11", area: "ตรัง (เมือง)", lat: 7.5550, lng: 99.6450, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 80, name: "สวนรุกขชาติรักษะวาริน", area: "ระนอง (เมือง)", lat: 9.9650, lng: 98.6450, distance: "800 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 81, name: "สวนสาธารณะหนองใหญ่", area: "ชุมพร (เมือง)", lat: 10.4950, lng: 99.1820, distance: "1.5 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 82, name: "สวนสาธารณะเขาโต๊ะพญาวัง", area: "สตูล (เมือง)", lat: 6.6150, lng: 100.0650, distance: "800 ม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.3", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 83, name: "สวนสมเด็จพระศรีนครินทร์ ปัตตานี", area: "ปัตตานี (เมือง)", lat: 6.8680, lng: 101.2500, distance: "1.2 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.5", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 84, name: "สวนขวัญเมือง", area: "ยะลา (เมือง)", lat: 6.5410, lng: 101.2820, distance: "1.5 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.6", near: false, free: true, light: true, rubber: false, parking: true },
+      { id: 85, name: "สวนเฉลิมพระเกียรติ 6 รอบ", area: "นราธิวาส (เมือง)", lat: 6.4250, lng: 101.8150, distance: "1.0 กม.", surface: "ทางปูน", lightLabel: "มีไฟส่องสว่าง", rating: "4.4", near: false, free: true, light: true, rubber: false, parking: true }
+    ];
+    // ค่าเริ่มต้นสำหรับสนามในฐานข้อมูล (ยังไม่มีข้อมูลคนเยอะน้อย/เวลา/รูป ให้ใช้ค่า default ตอนแสดงผล)
+    const defaultCrowd = "ปานกลาง";
+    const defaultHours = "เปิด 24 ชม.";
+
+    const map = L.map("map", { zoomControl: false, attributionControl: true }).setView([13.7508, 100.5367], 6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
+
+    const detailCard = document.getElementById("detailCard");
+    const resultCount = document.getElementById("resultCount");
+    const searchInput = document.getElementById("searchInput");
+    const toast = document.getElementById("toast");
+
+    let activeFilter = "all";
+    let selectedPlace = null;
+    let userLocationMarker = null;
+    let userLatLng = null;
+    let toastTimer;
+
+    const markerLayer = L.layerGroup().addTo(map);
+    const markerObjects = new Map();
+
+    function markerHTML(place, selected = false) {
+      const classes = ["run-marker", place.free ? "free" : "", selected ? "selected" : ""].join(" ");
+      return `<div class="${classes}"><span><i data-lucide="person-standing"></i></span></div>`;
+    }
+    function createMarkerIcon(place, selected = false) {
+      return L.divIcon({ className: "", html: markerHTML(place, selected), iconSize: [48, 48], iconAnchor: [24, 45] });
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.add("show");
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function haversineKm(lat1, lng1, lat2, lng2) {
+      const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function updateCard(place) {
+      selectedPlace = place;
+
+      document.getElementById("placeName").textContent = place.name;
+      document.getElementById("placeLocation").textContent = place.area;
+      document.getElementById("placeRating").textContent = place.rating;
+      document.getElementById("placeDistance").textContent = place.distance;
+      document.getElementById("placeSurface").textContent = place.surface;
+      document.getElementById("placeLight").textContent = place.lightLabel;
+      document.getElementById("placeCrowd").textContent = "คน" + (place.crowd || defaultCrowd);
+      document.getElementById("placeHours").textContent = place.hours || defaultHours;
+
+      const iconWrap = document.getElementById("cardIconWrap");
+      iconWrap.innerHTML = place.photo
+        ? `<img src="${place.photo}" alt="${place.name}" />`
+        : `<i data-lucide="footprints"></i>`;
+
+      markerObjects.forEach((marker, id) => {
+        const markerPlace = runningPlaces.find(item => item.id === id);
+        if (markerPlace) marker.setIcon(createMarkerIcon(markerPlace, markerPlace.id === place.id));
+      });
+
+      lucide.createIcons();
+      detailCard.classList.add("open");
+      map.setView([place.lat, place.lng], 14, { animate: true, duration: 0.5 });
+    }
+
+    function renderMarkers(places) {
+      markerLayer.clearLayers();
+      markerObjects.clear();
+      resultCount.textContent = places.length;
+      places.forEach(place => {
+        const marker = L.marker([place.lat, place.lng], { icon: createMarkerIcon(place, false) });
+        marker.on("click", () => updateCard(place));
+        marker.addTo(markerLayer);
+        markerObjects.set(place.id, marker);
+      });
+      lucide.createIcons();
+    }
+
+    function filterPlaces() {
+      const keyword = searchInput.value.trim().toLowerCase();
+      const filtered = runningPlaces.filter(place => {
+        const matchesText = place.name.toLowerCase().includes(keyword) || place.area.toLowerCase().includes(keyword);
+        const matchesFilter = activeFilter === "all" || Boolean(place[activeFilter]);
+        return matchesText && matchesFilter;
+      });
+      detailCard.classList.remove("open");
+      selectedPlace = null;
+      renderMarkers(filtered);
+      if (keyword && filtered.length === 0) showToast("ไม่พบสนามวิ่งที่ค้นหา");
+    }
+
+    document.querySelectorAll(".filter-chip").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".filter-chip").forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+        activeFilter = button.dataset.filter;
+        filterPlaces();
+      });
+    });
+
+    searchInput.addEventListener("input", filterPlaces);
+
+    document.getElementById("closeCard").addEventListener("click", () => {
+      detailCard.classList.remove("open");
+      selectedPlace = null;
+    });
+
+    document.getElementById("locateButton").addEventListener("click", () => {
+      if (!navigator.geolocation) { showToast("อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง"); return; }
+      showToast("กำลังค้นหาตำแหน่งของคุณ");
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const lat = position.coords.latitude, lng = position.coords.longitude;
+          userLatLng = { lat, lng };
+          if (userLocationMarker) map.removeLayer(userLocationMarker);
+          userLocationMarker = L.marker([lat, lng], {
+            icon: L.divIcon({ className: "", html: '<div class="user-marker"></div>', iconSize: [18, 18], iconAnchor: [9, 9] })
+          }).addTo(map);
+          map.setView([lat, lng], 14);
+          showToast("พบตำแหน่งของคุณแล้ว");
+        },
+        () => showToast("กรุณาอนุญาตให้เว็บไซต์เข้าถึงตำแหน่ง"),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+
+    document.getElementById("navigateButton").addEventListener("click", () => {
+      if (!selectedPlace) return;
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.lat},${selectedPlace.lng}`, "_blank");
+    });
+
+    document.getElementById("shareButton").addEventListener("click", async () => {
+      if (!selectedPlace) return;
+      const shareData = {
+        title: selectedPlace.name,
+        text: `สนามวิ่ง ${selectedPlace.name} พื้นที่ ${selectedPlace.area}`,
+        url: `https://www.google.com/maps?q=${selectedPlace.lat},${selectedPlace.lng}`
+      };
+      try {
+        if (navigator.share) await navigator.share(shareData);
+        else { await navigator.clipboard.writeText(shareData.url); showToast("คัดลอกลิงก์สนามวิ่งแล้ว"); }
+      } catch (e) {}
+    });
+
+    document.querySelectorAll(".nav-item").forEach(item => {
+      item.addEventListener("click", () => {
+        document.querySelectorAll(".nav-item").forEach(nav => nav.classList.remove("active"));
+        item.classList.add("active");
+      });
+    });
+
+    // ---------------- ปักหมุดสนามวิ่ง ----------------
+    const addSheet = document.getElementById("addSheet");
+    const addPlaceButton = document.getElementById("addPlaceButton");
+    const pickedCoordEl = document.getElementById("pickedCoord");
+    let placingMode = false;
+    let pickedLatLng = null;
+    let pickedCrowd = "ปานกลาง";
+    let pickedPhoto = null;
+    const newToggles = { light: false, free: false, parking: false, rubber: false };
+
+    document.querySelectorAll("#addSheet .toggle-chip[data-key]").forEach(chip => {
+      chip.addEventListener("click", () => {
+        newToggles[chip.dataset.key] = !newToggles[chip.dataset.key];
+        chip.classList.toggle("active");
+      });
+    });
+
+    document.querySelectorAll("#crowdSegment button").forEach(btn => {
+      if (btn.dataset.v === pickedCrowd) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        pickedCrowd = btn.dataset.v;
+        document.querySelectorAll("#crowdSegment button").forEach(b => b.classList.toggle("active", b === btn));
+      });
+    });
+
+    const open24Toggle = document.getElementById("open24Toggle");
+    const hoursRow = document.getElementById("hoursRow");
+    let isOpen24 = false;
+    open24Toggle.addEventListener("click", () => {
+      isOpen24 = !isOpen24;
+      open24Toggle.classList.toggle("active", isOpen24);
+      hoursRow.style.display = isOpen24 ? "none" : "grid";
+    });
+
+    document.getElementById("newPhoto").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        pickedPhoto = reader.result;
+        document.getElementById("photoPreview").innerHTML = `<img src="${pickedPhoto}" alt="ตัวอย่างรูปสนาม" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    addPlaceButton.addEventListener("click", () => {
+      placingMode = true;
+      addPlaceButton.style.background = "var(--track)";
+      showToast("แตะบนแผนที่เพื่อเลือกตำแหน่งสนามวิ่ง");
+    });
+
+    map.on("click", (e) => {
+      if (!placingMode) return;
+      pickedLatLng = e.latlng;
+      pickedCoordEl.classList.remove("pending");
+      pickedCoordEl.querySelector("span").textContent = `ตำแหน่งที่เลือก: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+      placingMode = false;
+      addPlaceButton.style.background = "";
+      addSheet.classList.add("open");
+    });
+
+    document.getElementById("cancelAdd").addEventListener("click", () => addSheet.classList.remove("open"));
+
+    document.getElementById("submitAdd").addEventListener("click", () => {
+      const name = document.getElementById("newName").value.trim();
+      if (!name) { showToast("กรุณาใส่ชื่อสนาม"); return; }
+      if (!pickedLatLng) { showToast("กรุณาแตะเลือกตำแหน่งบนแผนที่ก่อน"); return; }
+
+      const nextId = Math.max(...runningPlaces.map(p => p.id)) + 1;
+      const distance = userLatLng
+        ? (() => {
+            const km = haversineKm(userLatLng.lat, userLatLng.lng, pickedLatLng.lat, pickedLatLng.lng);
+            return km < 1 ? `${Math.round(km * 1000)} ม.` : `${km.toFixed(1)} กม.`;
+          })()
+        : "เพิ่งปักหมุด";
+
+      const hoursText = isOpen24
+        ? "เปิด 24 ชม."
+        : `${document.getElementById("newOpenTime").value || "05:00"} - ${document.getElementById("newCloseTime").value || "21:00"}`;
+
+      const newPlace = {
+        id: nextId,
+        name,
+        area: document.getElementById("newArea").value.trim() || "ไม่ระบุย่าน",
+        lat: pickedLatLng.lat,
+        lng: pickedLatLng.lng,
+        distance,
+        surface: document.getElementById("newSurface").value,
+        lightLabel: newToggles.light ? "มีไฟส่องสว่าง" : "ไม่มีไฟ",
+        rating: "ใหม่",
+        near: !!userLatLng,
+        free: newToggles.free,
+        light: newToggles.light,
+        rubber: newToggles.rubber,
+        parking: newToggles.parking,
+        crowd: pickedCrowd,
+        hours: hoursText,
+        photo: pickedPhoto,
+        reviews: []
+      };
+      runningPlaces.push(newPlace);
+
+      addSheet.classList.remove("open");
+      document.getElementById("newName").value = "";
+      document.getElementById("newArea").value = "";
+      pickedCoordEl.classList.add("pending");
+      pickedCoordEl.querySelector("span").textContent = "ยังไม่ได้เลือกตำแหน่ง — ปิดหน้าต่างนี้แล้วแตะบนแผนที่";
+      document.querySelectorAll("#addSheet .toggle-chip[data-key]").forEach(c => c.classList.remove("active"));
+      Object.keys(newToggles).forEach(k => newToggles[k] = false);
+      document.getElementById("photoPreview").innerHTML = `<i data-lucide="image"></i>`;
+      pickedPhoto = null;
+      pickedLatLng = null;
+      lucide.createIcons();
+
+      filterPlaces();
+      updateCard(newPlace);
+      showToast("ปักหมุดสำเร็จ ขอบคุณที่ช่วยคนวิ่งคนต่อไป 🙏");
+    });
+
+    // ---------------- ให้คะแนน ----------------
+    const reviewSheet = document.getElementById("reviewSheet");
+    let reviewStarValue = 0;
+
+    document.getElementById("reviewButton").addEventListener("click", () => {
+      if (!selectedPlace) return;
+      reviewStarValue = 0;
+      document.querySelectorAll("#reviewStars span").forEach(s => s.classList.remove("on"));
+      document.getElementById("reviewComment").value = "";
+      reviewSheet.classList.add("open");
+    });
+    document.getElementById("cancelReview").addEventListener("click", () => reviewSheet.classList.remove("open"));
+    document.querySelectorAll("#reviewStars span").forEach(s => {
+      s.addEventListener("click", () => {
+        reviewStarValue = Number(s.dataset.v);
+        document.querySelectorAll("#reviewStars span").forEach(x => x.classList.toggle("on", Number(x.dataset.v) <= reviewStarValue));
+      });
+    });
+    document.getElementById("submitReview").addEventListener("click", () => {
+      if (!selectedPlace) return;
+      if (!reviewStarValue) { showToast("กรุณาให้ดาวอย่างน้อย 1 ดวง"); return; }
+
+      const place = runningPlaces.find(p => p.id === selectedPlace.id);
+      const currentAvg = parseFloat(place.rating);
+      place.reviewCount = (place.reviewCount || (isNaN(currentAvg) ? 0 : 8)) + 1;
+      const base = isNaN(currentAvg) ? reviewStarValue : currentAvg;
+      const prevCount = place.reviewCount - 1;
+      place.rating = (((base * prevCount) + reviewStarValue) / place.reviewCount).toFixed(1);
+
+      if (!place.reviews) place.reviews = [];
+      const comment = document.getElementById("reviewComment").value.trim();
+      place.reviews.unshift({ rating: reviewStarValue, comment });
+
+      reviewSheet.classList.remove("open");
+      showToast("บันทึกรีวิวแล้ว ขอบคุณครับ");
+      updateCard(place);
+      filterPlaces();
+    });
+
+    // ---------------- แจ้งข้อมูล ----------------
+    const reportSheet = document.getElementById("reportSheet");
+    document.getElementById("reportButton").addEventListener("click", () => {
+      if (!selectedPlace) return;
+      document.getElementById("reportDetail").value = "";
+      reportSheet.classList.add("open");
+    });
+    document.getElementById("cancelReport").addEventListener("click", () => reportSheet.classList.remove("open"));
+    document.getElementById("submitReport").addEventListener("click", () => {
+      reportSheet.classList.remove("open");
+      showToast("ส่งรายงานแล้ว ทีมงานจะตรวจสอบ");
+    });
+
+    // ---------------- ดูรายละเอียด ----------------
+    const detailSheet = document.getElementById("detailSheet");
+    document.getElementById("detailButton").addEventListener("click", () => {
+      if (!selectedPlace) return;
+      const place = runningPlaces.find(p => p.id === selectedPlace.id) || selectedPlace;
+
+      document.getElementById("detailPhotoWrap").innerHTML = place.photo
+        ? `<img src="${place.photo}" alt="${place.name}" />`
+        : `<i data-lucide="image"></i>`;
+      document.getElementById("detailName").textContent = place.name;
+      document.getElementById("detailArea").textContent = `${place.area} · ${place.distance}`;
+
+      const tags = [
+        place.surface,
+        place.lightLabel,
+        `คน${place.crowd || defaultCrowd}`,
+        place.hours || defaultHours,
+        place.free ? "ใช้ฟรี" : "เสียเงิน",
+        place.parking ? "มีที่จอดรถ" : "ไม่มีที่จอดรถ"
+      ];
+      document.getElementById("detailTags").innerHTML = tags.map(t => `<span>${t}</span>`).join("");
+
+      const reviews = place.reviews || [];
+      const reviewsHtml = reviews.length
+        ? `<div style="margin-top:6px"><label style="display:block;font-size:12.5px;font-weight:700;color:var(--primary-dark);margin-bottom:4px">รีวิวจากชุมชน</label>${
+            reviews.slice(0, 5).map(r => `
+              <div class="review-item">
+                <div class="stars">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div>
+                <p>${r.comment ? r.comment : "ไม่มีคอมเมนต์เพิ่มเติม"}</p>
+              </div>`).join("")
+          }</div>`
+        : "";
+      document.getElementById("detailReviews").innerHTML = reviewsHtml;
+
+      lucide.createIcons();
+      detailSheet.classList.add("open");
+    });
+    document.getElementById("closeDetail").addEventListener("click", () => detailSheet.classList.remove("open"));
+
+    renderMarkers(runningPlaces);
+    setTimeout(() => { updateCard(runningPlaces[0]); }, 650);
+  </script>
+</body>
+</html>
