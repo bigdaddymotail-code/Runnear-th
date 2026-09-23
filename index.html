@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>RunNear TH — สนามวิ่งใกล้ฉัน</title>
+  <meta name="description" content="RunNear TH คือแผนที่สนามวิ่งที่คนไทยช่วยกันปักหมุด บอกพื้นผิว ความหนาแน่นคน เวลาเปิด-ปิด และรูปสนามจริง ใช้ฟรี ไม่ต้องล็อกอิน" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --primary: #4CAF50;
+      --primary-dark: #163A22;
+      --primary-soft: #E3F6DE;
+      --track: #FF6B35;
+      --track-soft: #FFE4D6;
+      --text: #14261A;
+      --muted: #74847B;
+      --border: #DEE6DD;
+      --surface: #ffffff;
+      --background: #EEF3ED;
+      --danger: #D64231;
+      --shadow: 0 18px 48px rgba(15, 41, 24, 0.2);
+    }
+    :root { --yellow: var(--track); }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%;
+      margin: 0;
+      font-family: "Noto Sans Thai", sans-serif;
+      color: var(--text);
+      background: var(--background);
+    }
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+
+    /* ======================= LANDING PAGE ======================= */
+    .site-header {
+      position: sticky; top: 0; z-index: 500;
+      background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 72px; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; white-space: nowrap; }
+    .brand img { width: 40px; height: 40px; object-fit: contain; }
+    .site-nav { display: flex; gap: 22px; font-size: 14px; font-weight: 700; color: var(--muted); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      height: 44px; padding: 0 20px; border-radius: 14px; border: 1px solid var(--border);
+      background: #fff; font-weight: 800; font-size: 14px; white-space: nowrap;
+    }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 10px 22px rgba(76,175,80,.28); }
+    .btn.track { background: var(--track); border-color: var(--track); color: #fff; box-shadow: 0 10px 22px rgba(255,107,53,.28); }
+
+    .hero { padding: 46px 0 40px; background: linear-gradient(180deg,#E7F6E2 0%, var(--background) 100%); overflow: hidden; }
+    .hero .wrap { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; align-items: center; }
+    .hero h1 { font-size: clamp(28px,4.6vw,42px); line-height: 1.24; font-weight: 800; margin: 0 0 14px; max-width: 15ch; }
+    .hero p.lead { color: var(--muted); font-size: 16.5px; line-height: 1.6; max-width: 46ch; margin: 0 0 22px; }
+    .hero-ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+    .stat-row { display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
+    .stat-pill { background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; color: var(--primary-dark); }
+    .hero-art { display: flex; justify-content: center; }
+    .hero-art img { width: 100%; max-width: 340px; filter: drop-shadow(0 20px 30px rgba(20,60,30,.18)); }
+
+    .loop { padding: 50px 0 10px; }
+    .loop h2 { font-size: 25px; font-weight: 800; margin: 0 0 6px; }
+    .loop p.sub { color: var(--muted); margin: 0 0 26px; max-width: 50ch; }
+    .steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .step { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 18px; }
+    .step .n { width: 32px; height: 32px; border-radius: 10px; background: var(--primary-soft); color: var(--primary-dark); display: grid; place-items: center; font-weight: 800; margin-bottom: 10px; font-size: 14px; }
+    .step h3 { margin: 0 0 5px; font-size: 15px; }
+    .step p { margin: 0; color: var(--muted); font-size: 12.8px; line-height: 1.5; }
+
+    .features { padding: 50px 0 10px; }
+    .features h2 { font-size: 25px; font-weight: 800; margin: 0 0 6px; }
+    .features p.sub { color: var(--muted); margin: 0 0 24px; max-width: 52ch; }
+    .feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .feat { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 16px; text-align: center; }
+    .feat i { color: var(--primary); width: 26px; height: 26px; }
+    .feat span { display: block; margin-top: 8px; font-size: 12.5px; font-weight: 700; }
+
+    .pin-cta { padding: 54px 0; }
+    .pin-cta .box { background: var(--primary-dark); color: #fff; border-radius: 28px; padding: 38px 30px; display: grid; grid-template-columns: 1.3fr auto; align-items: center; gap: 20px; }
+    .pin-cta h2 { margin: 0 0 8px; font-size: 22px; font-weight: 800; }
+    .pin-cta p { margin: 0; color: #cfe9d2; font-size: 14px; max-width: 42ch; }
+
+    .community { padding: 10px 0 50px; }
+    .community .box { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 24px; padding: 30px; }
+    .community h2 { font-size: 22px; font-weight: 800; margin: 0 0 10px; }
+    .community p { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0; }
+    .community img { max-width: 160px; margin: 0 auto; }
+
+    .faq { padding: 10px 0 54px; }
+    .faq h2 { font-size: 24px; font-weight: 800; margin: 0 0 18px; }
+    .faq-item { border-top: 1px solid var(--border); padding: 16px 0; }
+    .faq-item:last-child { border-bottom: 1px solid var(--border); }
+    .faq-item strong { display: block; font-size: 15px; margin-bottom: 5px; }
+    .faq-item p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+
+    .site-footer { padding: 30px 0 50px; border-top: 1px solid var(--border); }
+    .site-footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .site-footer .brand img { width: 30px; height: 30px; }
+    .site-footer p { color: var(--muted); font-size: 12.5px; margin: 0; }
+
+    .app-section { padding: 8px 0 60px; background: linear-gradient(180deg, var(--background) 0%, #E4EEE2 100%); }
+    .app-section .app-intro { text-align: center; max-width: 560px; margin: 0 auto 26px; }
+    .app-section .app-intro h2 { font-size: 24px; font-weight: 800; margin: 0 0 8px; }
+    .app-section .app-intro p { color: var(--muted); font-size: 14px; margin: 0; }
+
+    /* ======================= แถบเมนูด้านล่าง (ตรึงตลอดทั้งเว็บ) ======================= */
+    body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+    .global-nav {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 3000;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      background: rgba(255, 255, 255, 0.98);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      padding: 8px 4px calc(6px + env(safe-area-inset-bottom));
+      box-shadow: 0 -6px 18px rgba(15, 41, 24, 0.08);
+    }
+    .global-nav .nav-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      background: transparent; border: 0; color: var(--muted); font-size: 10.5px; font-weight: 700;
+    }
+    .global-nav .nav-icon { display: grid; place-items: center; width: 42px; height: 30px; border-radius: 12px; }
+    .global-nav .nav-icon i { width: 20px; height: 20px; }
+    .global-nav .nav-item.active { color: var(--primary-dark); }
+    .global-nav .nav-item.active .nav-icon { color: #2e9b36; background: var(--primary-soft); }
+
+    @media (max-width: 860px) {
+      .hero .wrap { grid-template-columns: 1fr; text-align: center; }
+      .hero p.lead { margin-left: auto; margin-right: auto; }
+      .hero-ctas { justify-content: center; }
+      .stat-row { justify-content: center; }
+      .hero-art { order: -1; }
+      .steps { grid-template-columns: repeat(2,1fr); }
+      .feat-grid { grid-template-columns: repeat(2,1fr); }
+      .pin-cta .box { grid-template-columns: 1fr; text-align: center; }
+      .community .box { grid-template-columns: 1fr; text-align: center; }
+      .site-nav { display: none; }
+    }
+
+    /* ======================= แอปแผนที่ (ฝังในหน้า ไม่เต็มจอถาวร) ======================= */
+    .app {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      height: 760px;
+      max-height: 84vh;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--background);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .header {
+      position: absolute; top: 0; right: 0; left: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      height: 76px;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid rgba(221, 228, 222, 0.8);
+      backdrop-filter: blur(16px);
+    }
+    .header h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.15; }
+    .header .tagline { display: block; margin-top: 1px; color: var(--muted); font-size: 10.5px; font-weight: 600; }
+    .header-logo { position: absolute; left: 18px; width: 38px; height: 38px; display: grid; place-items: center; }
+    .header-logo img { width: 38px; height: 38px; object-fit: contain; }
+
+    #map { position: absolute; inset: 0; z-index: 1; background: #e7ece7; }
+    .leaflet-control-zoom { display: none; }
+    .leaflet-control-attribution { margin-bottom: 85px !important; padding: 2px 5px !important; font-size: 8px !important; border-radius: 6px 0 0; }
+
+    .search-panel { position: absolute; top: 88px; right: 14px; left: 14px; z-index: 900; }
+    .search-box { display: flex; align-items: center; height: 52px; padding: 0 15px; background: rgba(255, 255, 255, 0.97); border: 1px solid rgba(221, 228, 222, 0.9); border-radius: 20px; box-shadow: 0 8px 22px rgba(27, 57, 37, 0.12); backdrop-filter: blur(14px); }
+    .search-box i { flex: 0 0 auto; width: 20px; color: #8a978f; }
+    .search-box input { width: 100%; margin-left: 10px; background: transparent; border: 0; outline: 0; font-size: 15px; }
+    .search-box input::placeholder { color: #96a198; }
+
+    .filters { display: flex; gap: 8px; margin-top: 10px; padding: 0 1px 6px; overflow-x: auto; scrollbar-width: none; }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter-chip { flex: 0 0 auto; height: 40px; padding: 0 16px; font-size: 13px; font-weight: 700; white-space: nowrap; background: rgba(255, 255, 255, 0.96); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 4px 12px rgba(27, 57, 37, 0.08); }
+    .filter-chip.active { color: #1a5424; background: var(--primary-soft); border-color: #bcefac; }
+
+    .result-pill { position: absolute; top: 200px; left: 50%; z-index: 800; display: flex; align-items: center; gap: 6px; max-width: calc(100% - 30px); padding: 8px 15px; color: #536158; background: rgba(255, 255, 255, 0.94); border: 1px solid rgba(221, 228, 222, 0.9); border-radius: 999px; box-shadow: 0 5px 15px rgba(27, 57, 37, 0.1); transform: translateX(-50%); white-space: nowrap; backdrop-filter: blur(12px); font-size: 12px; }
+    .result-pill strong { color: var(--primary-dark); }
+
+    .run-marker { position: relative; display: grid; width: 48px; height: 48px; place-items: center; background: var(--track); border: 3px solid #fff; border-radius: 50% 50% 50% 6px; box-shadow: 0 5px 14px rgba(35, 49, 38, 0.22); transform: rotate(-45deg); }
+    .run-marker span { display: grid; width: 32px; height: 32px; place-items: center; color: #14341f; background: #fff8d7; border-radius: 50%; transform: rotate(45deg); }
+    .run-marker span svg { width: 18px; height: 18px; stroke-width: 2.5; }
+    .run-marker.selected { background: #148846; transform: rotate(-45deg) scale(1.1); box-shadow: 0 7px 18px rgba(20, 136, 70, 0.32); }
+    .run-marker.selected span { color: #0c6635; background: #dff8d4; }
+    .run-marker.free { background: var(--primary); }
+    .user-marker { width: 18px; height: 18px; background: #2688ff; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 0 6px rgba(38, 136, 255, 0.2), 0 3px 10px rgba(0, 0, 0, 0.2); }
+
+    .map-actions { position: absolute; right: 14px; bottom: 100px; z-index: 850; display: flex; flex-direction: column; gap: 10px; }
+    .circle-button { display: grid; width: 48px; height: 48px; padding: 0; place-items: center; background: #fff; border: 1px solid var(--border); border-radius: 50%; box-shadow: 0 6px 16px rgba(27, 57, 37, 0.15); }
+    .circle-button i { width: 20px; }
+
+    .add-place { position: absolute; right: 14px; bottom: 158px; z-index: 850; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 16px; color: #123a20; font-weight: 800; font-size: 13px; background: var(--primary); border: 0; border-radius: 18px; box-shadow: 0 10px 22px rgba(81, 188, 57, 0.3); }
+    .add-place i { width: 18px; }
+
+    .detail-card { position: absolute; right: 10px; bottom: 16px; left: 10px; z-index: 1100; padding: 16px; background: rgba(255, 255, 255, 0.98); border: 1px solid rgba(222, 230, 223, 0.95); border-radius: 26px; box-shadow: var(--shadow); transform: translateY(calc(100% + 40px)); opacity: 0; transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease; backdrop-filter: blur(16px); }
+    .detail-card.open { transform: translateY(0); opacity: 1; }
+    .card-handle { width: 40px; height: 4px; margin: -6px auto 12px; background: #d6ddd7; border-radius: 99px; }
+    .card-top { display: flex; align-items: flex-start; gap: 12px; }
+    .place-icon { display: grid; flex: 0 0 auto; width: 52px; height: 52px; place-items: center; color: #174426; background: var(--primary); border-radius: 16px; overflow: hidden; }
+    .place-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .place-icon i { width: 26px; height: 26px; }
+    .place-heading { min-width: 0; flex: 1; }
+    .place-heading h2 { margin: 1px 0 3px; overflow: hidden; font-size: 18px; font-weight: 800; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+    .place-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+    .close-button { display: grid; flex: 0 0 auto; width: 36px; height: 36px; padding: 0; place-items: center; color: #5f6d64; background: #f6f8f6; border: 1px solid var(--border); border-radius: 50%; }
+    .close-button i { width: 18px; }
+
+    .status-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+    .status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; color: #516158; font-size: 12px; font-weight: 700; background: #f3f6f3; border-radius: 999px; }
+    .status.open { color: #16753a; background: #e2f7dc; }
+    .status i { width: 14px; height: 14px; }
+
+    .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+    .fact { min-width: 0; padding: 9px 6px; text-align: center; background: #f3f6f3; border-radius: 14px; }
+    .fact i { width: 18px; height: 18px; color: #2b7a3c; }
+    .fact strong { display: block; margin-top: 3px; font-size: 11px; line-height: 1.2; }
+    .fact span { display: block; margin-top: 1px; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .card-actions { display: grid; grid-template-columns: 1fr 1fr 42px; gap: 6px; margin-top: 12px; }
+    .outline-button { display: flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 8px; font-size: 12px; font-weight: 800; background: #fff; border: 1px solid #d6ded7; border-radius: 14px; }
+    .outline-button i { width: 15px; }
+    .outline-button.report { color: var(--danger); }
+
+    .primary-actions { display: grid; grid-template-columns: 1fr 1.15fr; gap: 8px; margin-top: 8px; }
+    .large-button { display: flex; align-items: center; justify-content: center; gap: 6px; height: 46px; font-size: 14px; font-weight: 800; background: #fff; border: 1px solid #d6ded7; border-radius: 16px; }
+    .large-button.primary { color: #153c21; background: var(--primary); border-color: var(--primary); box-shadow: 0 6px 16px rgba(115, 220, 75, 0.25); }
+    .large-button i { width: 18px; }
+
+    .toast { position: absolute; bottom: 30px; left: 50%; z-index: 1500; max-width: calc(100% - 30px); padding: 10px 15px; color: #fff; font-size: 12px; font-weight: 700; text-align: center; background: rgba(19, 41, 28, 0.93); border-radius: 12px; box-shadow: 0 8px 20px rgba(19, 41, 28, 0.22); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; transition: 0.22s ease; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    /* ---- แผ่นฟอร์ม: ปักหมุด / รีวิว / แจ้งข้อมูล / รายละเอียด ---- */
+    .sheet-backdrop { position: absolute; inset: 0; z-index: 1800; display: none; align-items: flex-end; background: rgba(14, 26, 17, 0.46); }
+    .sheet-backdrop.open { display: flex; }
+    .sheet { width: 100%; max-height: 86%; overflow: auto; padding: 20px 20px calc(18px + env(safe-area-inset-bottom)); background: #fff; border-radius: 28px 28px 0 0; box-shadow: var(--shadow); }
+    .sheet-handle { width: 40px; height: 4px; margin: 0 auto 14px; background: #d9e0d8; border-radius: 99px; }
+    .sheet h3 { margin: 0 0 4px; font-size: 18px; font-weight: 800; }
+    .sheet p.hint { margin: 0 0 16px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+    .field { margin-bottom: 13px; }
+    .field label { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 700; color: var(--primary-dark); }
+    .field input[type=text], .field select, .field textarea, .field input[type=time] {
+      width: 100%; padding: 11px 13px; background: var(--background); border: 1px solid var(--border); border-radius: 13px; font-size: 14px;
+    }
+    .field textarea { resize: none; }
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .toggle-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .toggle-chip { padding: 9px 14px; font-size: 12.5px; font-weight: 700; background: var(--background); border: 1px solid var(--border); border-radius: 12px; }
+    .toggle-chip.active { color: #1a5424; background: var(--primary-soft); border-color: #bcefac; }
+    .segmented { display: flex; gap: 6px; }
+    .segmented button { flex: 1; padding: 10px 6px; font-size: 12.5px; font-weight: 700; background: var(--background); border: 1px solid var(--border); border-radius: 12px; }
+    .segmented button.active { color: #7a3a12; background: var(--track-soft); border-color: #ffc4a3; }
+    .photo-upload { display: flex; align-items: center; gap: 10px; }
+    .photo-preview { width: 64px; height: 64px; border-radius: 14px; background: var(--background); border: 1px dashed var(--border); display: grid; place-items: center; overflow: hidden; flex: 0 0 auto; }
+    .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-preview i { color: var(--muted); width: 22px; }
+    .file-btn { height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--background); font-size: 12.5px; font-weight: 700; }
+    .picked-hint { margin-bottom: 12px; padding: 10px 13px; color: #1a5424; font-size: 12px; font-weight: 600; background: var(--primary-soft); border-radius: 12px; display: flex; align-items: center; gap: 7px; }
+    .picked-hint.pending { color: #8a5a12; background: #fff3de; }
+    .stars-input { display: flex; gap: 6px; margin-bottom: 2px; font-size: 30px; line-height: 1; }
+    .stars-input span { color: #e3e8e2; }
+    .stars-input span.on { color: var(--track); }
+    .sheet-actions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; margin-top: 6px; }
+    .sheet-actions button { height: 49px; font-size: 14.5px; font-weight: 800; border-radius: 15px; border: 1px solid var(--border); background: #fff; }
+    .sheet-actions button.primary { color: #163a22; background: var(--primary); border-color: var(--primary); }
+
+    /* ---- แผ่นรายละเอียดสนาม ---- */
+    .detail-photo { width: 100%; height: 150px; border-radius: 18px; overflow: hidden; background: var(--background); display: grid; place-items: center; margin-bottom: 14px; }
+    .detail-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .detail-photo i { color: var(--muted); width: 30px; }
+    .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+    .detail-tags span { padding: 6px 11px; background: var(--background); border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--primary-dark); }
+    .review-item { padding: 10px 0; border-top: 1px solid var(--border); font-size: 12.5px; }
+    .review-item .stars { color: var(--track); font-size: 13px; margin-bottom: 3px; }
+    .review-item p { margin: 0; color: var(--muted); line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- ======================= LANDING PAGE ======================= -->
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="#top"><img src="assets/logo.png" alt="RunNear TH" />RunNear TH</a>
+      <nav class="site-nav">
+        <a href="#how">ทำงานยังไง</a>
+        <a href="#community">ชุมชน</a>
+      </nav>
+      <a class="btn primary" href="app.html">เปิดแผนที่</a>
+    </div>
+  </header>
+
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div>
+        <h1>อยากวิ่งตอนนี้ หาสนามวิ่งใกล้ตัวได้ใน 5 วินาที</h1>
+        <p class="lead">RunNear TH คือแผนที่สนามวิ่งที่คนไทยช่วยกันปักหมุด บอกพื้นผิว ความหนาแน่นของคน เวลาเปิด-ปิด และรูปสนามจริง ใช้ฟรี ไม่ต้องล็อกอิน</p>
+        <div class="hero-ctas">
+          <a class="btn track" href="app.html">เปิดแผนที่เลย</a>
+          <a class="btn" href="app.html">ปักหมุดสนามที่คุณรู้</a>
+        </div>
+        <div class="stat-row">
+          <span class="stat-pill">ไม่ต้องล็อกอิน</span>
+          <span class="stat-pill">ข้อมูลจากคนวิ่งจริง</span>
+          <span class="stat-pill">ฟรี 100% ไม่มีโฆษณา</span>
+        </div>
+      </div>
+      <div class="hero-art"><img src="assets/logo.png" alt="มาสคอต RunNear TH" /></div>
+    </div>
+  </section>
+
+  <section class="loop" id="how">
+    <div class="wrap">
+      <h2>วงจรง่าย ๆ ที่ทำให้แผนที่แม่นขึ้นทุกวัน</h2>
+      <p class="sub">หา → วิ่ง → ให้ดาว → ปักหมุด → คนวิ่งคนต่อไปหาเจอเร็วขึ้น</p>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h3>หา</h3><p>กดครั้งเดียว เห็นสนามวิ่งใกล้สุดพร้อมระยะทาง</p></div>
+        <div class="step"><div class="n">2</div><h3>วิ่ง</h3><p>รู้ก่อนไปว่าพื้นแบบไหน คนเยอะไหม เปิดกี่โมง</p></div>
+        <div class="step"><div class="n">3</div><h3>ให้ดาว</h3><p>วิ่งเสร็จแล้ว ให้คะแนนสนาม ใช้เวลา 10 วินาที</p></div>
+        <div class="step"><div class="n">4</div><h3>ปักหมุด</h3><p>เจอสนามใหม่ ปักหมุดไว้ให้คนวิ่งคนต่อไปรอด</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pin-cta">
+    <div class="wrap">
+      <div class="box">
+        <div>
+          <h2>เจอสนามดี อย่าเก็บไว้คนเดียว</h2>
+          <p>ปักหมุดใช้เวลา 30 วินาที ไม่ต้องล็อกอิน บอกแค่ว่าอยู่ไหน พื้นแบบไหน แล้วคนวิ่งคนต่อไปแถวนั้นก็รอด</p>
+        </div>
+        <a class="btn track" href="app.html">ปักหมุดที่คุณรู้</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="community" id="community">
+    <div class="wrap">
+      <div class="box">
+        <div>
+          <h2>คนหนึ่งปัก อีกคนได้วิ่ง</h2>
+          <p>แผนที่ตั้งต้นมาจากข้อมูลเปิดของ OpenStreetMap แล้วคนที่เคยวิ่งช่วยกันเติมว่าที่ไหนดี พื้นแบบไหน คนเยอะไหม ไม่มีโฆษณา ไม่มีสปอนเซอร์หมุด</p>
+        </div>
+        <img src="assets/logo.png" alt="มาสคอต RunNear TH" />
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <a class="brand" href="#top"><img src="assets/logo.png" alt="RunNear TH" />RunNear TH</a>
+      <p>© 2569 RunNear TH · ข้อมูลและคะแนนทุกอันมาจากคนวิ่งจริง</p>
+    </div>
+  </footer>
+
+  <!-- ======================= แผนที่ / แอป (อยู่หน้าแยกต่างหาก) ======================= -->
+  <section class="app-section" id="app">
+    <div class="app-intro">
+      <h2>ลองใช้แผนที่ได้เลย</h2>
+      <p>ค้นหา กรอง ดูรายละเอียด ปักหมุด และให้คะแนนสนามวิ่งได้จริงในหน้าแผนที่</p>
+      <div class="hero-ctas" style="justify-content:center;margin-top:18px">
+        <a class="btn track" href="app.html">เปิดแผนที่</a>
+        <a class="btn" href="app.html">ปักหมุดสนามที่คุณรู้</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= แถบเมนูด้านล่าง (ตรึงตลอดทั้งเว็บ) ======================= -->
+  <nav class="global-nav" id="globalNav">
+    <a class="nav-item active" href="index.html"><span class="nav-icon"><i data-lucide="house"></i></span>หน้าแรก</a>
+    <a class="nav-item" href="app.html"><span class="nav-icon"><i data-lucide="map"></i></span>แผนที่</a>
+    <a class="nav-item" href="app.html?focus=search"><span class="nav-icon"><i data-lucide="search"></i></span>ค้นหา</a>
+    <a class="nav-item" href="#community"><span class="nav-icon"><i data-lucide="trophy"></i></span>ชุมชน</a>
+    <button class="nav-item" id="navProfile"><span class="nav-icon"><i data-lucide="user-round"></i></span>โปรไฟล์</button>
+  </nav>
+
+  <div class="toast" id="toast" style="position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translate(-50%,20px);z-index:4000;background:rgba(19,41,28,.93);color:#fff;padding:11px 18px;border-radius:14px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:.22s ease;"></div>
+
+  <script>
+    lucide.createIcons();
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      clearTimeout(toastTimer);
+      t.textContent = msg;
+      t.style.opacity = "1";
+      t.style.transform = "translate(-50%,0)";
+      toastTimer = setTimeout(() => {
+        t.style.opacity = "0";
+        t.style.transform = "translate(-50%,20px)";
+      }, 2400);
+    }
+    document.getElementById("navProfile").addEventListener("click", () => showToast("หน้าโปรไฟล์จะเปิดใช้งานเร็วๆ นี้"));
+  </script>
+</body>
+</html>
